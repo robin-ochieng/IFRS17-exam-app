@@ -47,11 +47,16 @@ export default function DashboardPage() {
       }
 
       // Combine exams with their attempts
-      const examsWithAttempts: ExamWithAttempts[] = (examsResult.data || []).map((exam) => ({
-        ...exam,
-        attempts: (attemptsResult.data || []).filter((attempt) => attempt.exam_id === exam.id)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      })) as any;
+      const examsData = examsResult.data || [];
+      const attemptsData = attemptsResult.data || [];
+      
+      const examsWithAttempts: ExamWithAttempts[] = examsData.map((exam) => {
+        const examObj = exam as Exam;
+        return {
+          ...examObj,
+          attempts: attemptsData.filter((attempt) => attempt.exam_id === examObj.id) as Attempt[]
+        };
+      });
 
       setExams(examsWithAttempts);
     } catch (err) {

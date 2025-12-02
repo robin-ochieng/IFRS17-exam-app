@@ -36,8 +36,8 @@ export default function DashboardPage() {
           .order('created_at', { ascending: false }),
         supabase
           .from('attempts')
-          .select('id, exam_id, status, score, started_at, completed_at')
-          .eq('student_id', user.id)
+          .select('id, exam_id, status, raw_score, started_at, submitted_at')
+          .eq('user_id', user.id)
       ]);
 
       if (examsResult.error) {
@@ -46,15 +46,37 @@ export default function DashboardPage() {
         return;
       }
 
+      // Define the shape of attempt data from the query
+      type AttemptData = {
+        id: string;
+        exam_id: string;
+        status: string;
+        raw_score: number | null;
+        started_at: string;
+        submitted_at: string | null;
+      };
+
       // Combine exams with their attempts
       const examsData = examsResult.data || [];
-      const attemptsData = attemptsResult.data || [];
+      const attemptsData = (attemptsResult.data || []) as AttemptData[];
       
       const examsWithAttempts: ExamWithAttempts[] = examsData.map((exam) => {
         const examObj = exam as Exam;
+        const examAttempts = attemptsData
+          .filter((attempt) => attempt.exam_id === examObj.id)
+          .map((attempt) => ({
+            ...attempt,
+            score: attempt.raw_score,
+            completed_at: attempt.submitted_at,
+            student_id: user.id,
+            passed: null,
+            expires_at: '',
+            created_at: attempt.started_at,
+            updated_at: attempt.started_at,
+          })) as Attempt[];
         return {
           ...examObj,
-          attempts: attemptsData.filter((attempt) => attempt.exam_id === examObj.id) as Attempt[]
+          attempts: examAttempts
         };
       });
 
@@ -93,7 +115,7 @@ export default function DashboardPage() {
   }
 
   const getExamStatus = (exam: ExamWithAttempts) => {
-    const completedAttempt = exam.attempts.find(a => a.status === 'completed');
+    const completedAttempt = exam.attempts.find(a => a.status === 'completed' || a.status === 'submitted');
     const inProgressAttempt = exam.attempts.find(a => a.status === 'in_progress');
     
     if (completedAttempt) {

@@ -127,12 +127,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Update the profile with full name and organisation
     if (data.user) {
+      const updateData: { full_name: string; organisation: string | null } = {
+        full_name: fullName,
+        organisation: organisation || null,
+      };
       await supabase
         .from('profiles')
-        .update({
-          full_name: fullName,
-          organisation: organisation || null,
-        })
+        .update(updateData)
         .eq('id', data.user.id);
     }
 

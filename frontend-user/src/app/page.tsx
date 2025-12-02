@@ -10,14 +10,16 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center">
-              <Image
-                src="/IRA logo.png"
-                alt="IRA IFRS 17 Exam"
-                width={220}
-                height={56}
-                className="h-14 w-auto"
-                priority
-              />
+              <div className="bg-white rounded-lg px-3 py-1">
+                <Image
+                  src="/IRA logo.png"
+                  alt="IRA IFRS 17 Exam"
+                  width={220}
+                  height={56}
+                  className="h-12 w-auto"
+                  priority
+                />
+              </div>
             </div>
             <div className="flex items-center space-x-3">
               <Link href="/login">

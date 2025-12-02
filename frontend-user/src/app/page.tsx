@@ -6,7 +6,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
+      <nav className="bg-gradient-to-r from-blue-700 via-blue-800 to-blue-700 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center">
@@ -21,10 +21,10 @@ export default function HomePage() {
             </div>
             <div className="flex items-center space-x-3">
               <Link href="/login">
-                <Button variant="ghost" className="text-gray-600 hover:text-gray-900">Sign In</Button>
+                <Button variant="ghost" className="text-white hover:text-white hover:bg-white/10">Sign In</Button>
               </Link>
               <Link href="/register">
-                <Button className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/25">Register</Button>
+                <Button className="bg-white text-blue-700 hover:bg-blue-50 shadow-lg font-semibold">Register</Button>
               </Link>
             </div>
           </div>

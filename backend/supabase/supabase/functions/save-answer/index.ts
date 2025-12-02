@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
       .from('attempts')
       .select('id, status, expires_at')
       .eq('id', attempt_id)
-      .eq('student_id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (attemptError || !attempt) {

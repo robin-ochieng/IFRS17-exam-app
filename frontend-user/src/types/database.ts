@@ -7,7 +7,7 @@ export type Json =
   | Json[];
 
 export type UserRole = 'student' | 'admin' | 'super_admin';
-export type AttemptStatus = 'in_progress' | 'completed' | 'expired';
+export type AttemptStatus = 'in_progress' | 'submitted' | 'expired';
 
 export interface Database {
   public: {
@@ -156,41 +156,41 @@ export interface Database {
         Row: {
           id: string;
           exam_id: string;
-          student_id: string;
+          user_id: string;
           started_at: string;
-          completed_at: string | null;
+          submitted_at: string | null;
           expires_at: string;
-          score: number | null;
+          raw_score: number | null;
+          percent_score: number | null;
           passed: boolean | null;
           status: AttemptStatus;
           created_at: string;
-          updated_at: string;
         };
         Insert: {
           id?: string;
           exam_id: string;
-          student_id: string;
+          user_id: string;
           started_at?: string;
-          completed_at?: string | null;
+          submitted_at?: string | null;
           expires_at?: string;
-          score?: number | null;
+          raw_score?: number | null;
+          percent_score?: number | null;
           passed?: boolean | null;
           status?: AttemptStatus;
           created_at?: string;
-          updated_at?: string;
         };
         Update: {
           id?: string;
           exam_id?: string;
-          student_id?: string;
+          user_id?: string;
           started_at?: string;
-          completed_at?: string | null;
+          submitted_at?: string | null;
           expires_at?: string;
-          score?: number | null;
+          raw_score?: number | null;
+          percent_score?: number | null;
           passed?: boolean | null;
           status?: AttemptStatus;
           created_at?: string;
-          updated_at?: string;
         };
       };
       attempt_answers: {
@@ -238,13 +238,13 @@ export interface Database {
       };
       leaderboard: {
         Row: {
-          student_id: string;
+          user_id: string;
           full_name: string;
           organisation: string | null;
           exam_id: string;
           exam_title: string;
-          best_score: number;
-          best_percentage: number;
+          best_raw_score: number;
+          best_percent_score: number;
           attempts_count: number;
           first_attempt: string;
           best_attempt: string;

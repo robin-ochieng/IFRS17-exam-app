@@ -66,13 +66,11 @@ export default function DashboardPage() {
           .filter((attempt) => attempt.exam_id === examObj.id)
           .map((attempt) => ({
             ...attempt,
-            score: attempt.raw_score,
-            completed_at: attempt.submitted_at,
-            student_id: user.id,
+            user_id: user.id,
             passed: null,
+            percent_score: null,
             expires_at: '',
             created_at: attempt.started_at,
-            updated_at: attempt.started_at,
           })) as Attempt[];
         return {
           ...examObj,
@@ -115,13 +113,13 @@ export default function DashboardPage() {
   }
 
   const getExamStatus = (exam: ExamWithAttempts) => {
-    const completedAttempt = exam.attempts.find(a => a.status === 'completed' || a.status === 'submitted');
+    const completedAttempt = exam.attempts.find(a => a.status === 'submitted');
     const inProgressAttempt = exam.attempts.find(a => a.status === 'in_progress');
     
     if (completedAttempt) {
       return {
         status: 'completed',
-        score: completedAttempt.score,
+        score: completedAttempt.raw_score,
         label: 'Completed',
         color: 'text-green-600 bg-green-100',
       };

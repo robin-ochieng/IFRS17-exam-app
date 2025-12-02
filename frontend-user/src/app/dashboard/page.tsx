@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,7 +21,45 @@ export default function DashboardPage() {
   const [exams, setExams] = useState<ExamWithAttempts[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+
+  const fetchExams = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      // Fetch exams and attempts in parallel for faster loading
+      const [examsResult, attemptsResult] = await Promise.all([
+        supabase
+          .from('exams')
+          .select('id, title, description, duration_minutes, total_marks, max_attempts, is_active')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('attempts')
+          .select('id, exam_id, status, score, started_at, completed_at')
+          .eq('student_id', user.id)
+      ]);
+
+      if (examsResult.error) {
+        console.error('Error fetching exams:', examsResult.error);
+        setIsLoading(false);
+        return;
+      }
+
+      // Combine exams with their attempts
+      const examsWithAttempts: ExamWithAttempts[] = (examsResult.data || []).map((exam) => ({
+        ...exam,
+        attempts: (attemptsResult.data || []).filter((attempt) => attempt.exam_id === exam.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      })) as any;
+
+      setExams(examsWithAttempts);
+    } catch (err) {
+      console.error('Error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, supabase]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -29,57 +67,12 @@ export default function DashboardPage() {
       return;
     }
 
-    const fetchExams = async () => {
-      if (!user) return;
-
-      try {
-        // First, get all active exams
-        const { data: examsData, error: examsError } = await supabase
-          .from('exams')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: false });
-
-        if (examsError) {
-          console.error('Error fetching exams:', examsError);
-          setIsLoading(false);
-          return;
-        }
-
-        // Then, get user's attempts for these exams
-        const { data: attemptsData, error: attemptsError } = await supabase
-          .from('attempts')
-          .select('id, exam_id, status, raw_score, percent_score, passed, started_at, submitted_at')
-          .eq('user_id', user.id);
-
-        if (attemptsError) {
-          console.error('Error fetching attempts:', attemptsError);
-          // Continue without attempts data
-        }
-
-        // Combine exams with their attempts
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const examsWithAttempts: ExamWithAttempts[] = (examsData || []).map((exam: any) => ({
-          ...exam,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          attempts: (attemptsData || []).filter((attempt: any) => attempt.exam_id === exam.id)
-        }));
-
-        setExams(examsWithAttempts);
-      } catch (err) {
-        console.error('Error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (user) {
       fetchExams();
     } else if (!authLoading) {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, authLoading]);
+  }, [user, authLoading, router, fetchExams]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -101,17 +94,15 @@ export default function DashboardPage() {
     if (completedAttempt) {
       return {
         status: 'completed',
-        passed: completedAttempt.passed,
         score: completedAttempt.score,
-        label: completedAttempt.passed ? 'Passed' : 'Failed',
-        color: completedAttempt.passed ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100',
+        label: 'Completed',
+        color: 'text-green-600 bg-green-100',
       };
     }
     
     if (inProgressAttempt) {
       return {
         status: 'in_progress',
-        passed: null,
         score: null,
         label: 'In Progress',
         color: 'text-yellow-600 bg-yellow-100',
@@ -121,7 +112,6 @@ export default function DashboardPage() {
     if (exam.max_attempts && exam.attempts.length >= exam.max_attempts) {
       return {
         status: 'exhausted',
-        passed: null,
         score: null,
         label: 'No Attempts Left',
         color: 'text-gray-600 bg-gray-100',
@@ -130,7 +120,6 @@ export default function DashboardPage() {
     
     return {
       status: 'available',
-      passed: null,
       score: null,
       label: 'Available',
       color: 'text-blue-600 bg-blue-100',
@@ -201,8 +190,8 @@ export default function DashboardPage() {
                 <Card key={exam.id} className="group border-0 shadow-xl hover:shadow-2xl transition-all duration-300 bg-white rounded-2xl overflow-hidden">
                   {/* Status Banner */}
                   <div className={`px-6 py-2 text-center text-xs font-bold uppercase tracking-wider ${
-                    examStatus.status === 'in_progress' ? 'bg-gradient-to-r from-amber-400 to-orange-400 text-white' :
-                    examStatus.status === 'completed' ? (examStatus.passed ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : 'bg-gradient-to-r from-red-400 to-rose-500 text-white') :
+                    examStatus.status === 'in_progress' ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white' :
+                    examStatus.status === 'completed' ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' :
                     examStatus.status === 'exhausted' ? 'bg-gray-200 text-gray-600' :
                     'bg-gradient-to-r from-blue-500 to-indigo-500 text-white'
                   }`}>
@@ -221,7 +210,7 @@ export default function DashboardPage() {
                   <CardContent className="pt-0">
                     <div className="space-y-5">
                       {/* Stats Grid */}
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col items-center p-3 bg-blue-50 rounded-xl">
                           <Clock className="h-5 w-5 text-blue-500 mb-1" />
                           <span className="text-lg font-bold text-gray-900">{exam.duration_minutes}</span>
@@ -232,17 +221,10 @@ export default function DashboardPage() {
                           <span className="text-lg font-bold text-gray-900">{exam.total_marks}</span>
                           <span className="text-xs text-gray-500">marks</span>
                         </div>
-                        <div className="flex flex-col items-center p-3 bg-green-50 rounded-xl">
-                          <svg className="h-5 w-5 text-green-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="text-lg font-bold text-gray-900">{exam.pass_mark_percent}%</span>
-                          <span className="text-xs text-gray-500">to pass</span>
-                        </div>
                       </div>
                       
                       {examStatus.status === 'completed' && examStatus.score !== null && (
-                        <div className={`text-center py-4 px-4 rounded-xl font-semibold ${examStatus.passed ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+                        <div className="text-center py-4 px-4 rounded-xl font-semibold bg-blue-100 text-blue-700 border border-blue-200">
                           <span className="text-2xl font-bold">{examStatus.score}/{exam.total_marks}</span>
                           <span className="ml-2 text-sm">({Math.round((examStatus.score / exam.total_marks) * 100)}%)</span>
                         </div>
@@ -262,7 +244,7 @@ export default function DashboardPage() {
                         )}
                         {examStatus.status === 'in_progress' && (
                           <Button 
-                            className="w-full py-6 text-base bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/30 font-semibold rounded-xl transition-all hover:scale-[1.02] hover:shadow-xl"
+                            className="w-full py-6 text-base bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 shadow-lg shadow-cyan-500/30 font-semibold rounded-xl transition-all hover:scale-[1.02] hover:shadow-xl"
                             onClick={() => router.push(`/exam/${exam.id}`)}
                           >
                             Continue Exam

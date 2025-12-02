@@ -105,12 +105,18 @@ Deno.serve(async (req) => {
 
     // If no in-progress attempt, create a new one
     if (!attempt) {
+      // Calculate expires_at based on exam duration
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + exam.duration_minutes * 60 * 1000);
+      
       const { data: newAttempt, error: createError } = await supabase
         .from('attempts')
         .insert({
           exam_id,
           user_id: user.id,
           status: 'in_progress',
+          started_at: now.toISOString(),
+          expires_at: expiresAt.toISOString(),
         })
         .select()
         .single();
@@ -121,6 +127,21 @@ Deno.serve(async (req) => {
       }
 
       attempt = newAttempt;
+    } else if (!attempt.expires_at) {
+      // If existing attempt has no expires_at, calculate and update it
+      const startedAt = new Date(attempt.started_at);
+      const expiresAt = new Date(startedAt.getTime() + exam.duration_minutes * 60 * 1000);
+      
+      const { data: updatedAttempt, error: updateError } = await supabase
+        .from('attempts')
+        .update({ expires_at: expiresAt.toISOString() })
+        .eq('id', attempt.id)
+        .select()
+        .single();
+      
+      if (!updateError && updatedAttempt) {
+        attempt = updatedAttempt;
+      }
     }
 
     // Get questions for the exam (using the student_options view that hides is_correct)

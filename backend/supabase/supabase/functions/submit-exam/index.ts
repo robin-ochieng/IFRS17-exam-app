@@ -69,12 +69,11 @@ Deno.serve(async (req) => {
           id,
           title,
           total_marks,
-          pass_mark_percent,
           allow_review
         )
       `)
       .eq('id', attempt_id)
-      .eq('student_id', user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (attemptError || !attempt) {
@@ -124,7 +123,7 @@ Deno.serve(async (req) => {
     // Calculate score and build results
     let totalScore = 0;
     const questionResults: QuestionResult[] = [];
-    const answerInserts: { attempt_id: string; question_id: string; selected_option_id: string; is_correct: boolean; marks_earned: number }[] = [];
+    const answerInserts: { attempt_id: string; question_id: string; selected_option_id: string; is_correct: boolean; awarded_marks: number }[] = [];
 
     for (const question of questions) {
       const options = (question.options as any[]).sort((a, b) => a.display_order - b.display_order);
@@ -161,7 +160,7 @@ Deno.serve(async (req) => {
           question_id: question.id,
           selected_option_id: selectedOptionId,
           is_correct: isCorrect,
-          marks_earned: marksEarned,
+          awarded_marks: marksEarned,
         });
       }
     }
@@ -187,18 +186,18 @@ Deno.serve(async (req) => {
     // Calculate final results
     const exam = attempt.exams as any;
     const totalMarks = exam.total_marks;
-    const passMark = Math.ceil((exam.pass_mark_percent / 100) * totalMarks);
-    const passed = totalScore >= passMark;
-    const percentageScore = Math.round((totalScore / totalMarks) * 100);
+    const questionsCorrect = questionResults.filter((q) => q.is_correct).length;
+    // Use accuracy percentage (correct answers / total questions) instead of marks-based percentage
+    const accuracyPercent = Math.round((questionsCorrect / questions.length) * 100);
 
     // Update the attempt with final results
     const { error: updateError } = await adminClient
       .from('attempts')
       .update({
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-        score: totalScore,
-        passed,
+        status: 'submitted',
+        submitted_at: new Date().toISOString(),
+        raw_score: totalScore,
+        percent_score: accuracyPercent,  // Store accuracy percentage, not marks percentage
       })
       .eq('id', attempt_id);
 
@@ -215,14 +214,11 @@ Deno.serve(async (req) => {
         exam_title: exam.title,
         total_marks: totalMarks,
         score: totalScore,
-        percentage: percentageScore,
-        pass_mark: passMark,
-        pass_mark_percent: exam.pass_mark_percent,
-        passed,
+        percentage: accuracyPercent,  // Return accuracy percentage
         completed_at: new Date().toISOString(),
         questions_answered: answerInserts.length,
         questions_total: questions.length,
-        questions_correct: questionResults.filter((q) => q.is_correct).length,
+        questions_correct: questionsCorrect,
       },
     };
 

@@ -30,7 +30,6 @@ export interface Exam {
   description?: string;
   is_active: boolean;
   total_marks: number;
-  pass_mark_percent: number;
   duration_minutes: number;
   randomize_questions: boolean;
   created_by?: string;
@@ -88,7 +87,6 @@ export interface Attempt {
   submitted_at?: string | Date;
   raw_score?: number;
   percent_score?: number;
-  passed?: boolean;
   status: AttemptStatus;
 }
 
@@ -135,8 +133,6 @@ export interface ExamResult {
   raw_score: number;
   total_marks: number;
   percent_score: number;
-  pass_mark_percent: number;
-  passed: boolean;
   submitted_at: string | Date;
   questions: QuestionReview[];
 }

@@ -17,7 +17,7 @@ export interface Database {
           id: string;
           email: string;
           full_name: string | null;
-          company: string | null;
+          organisation: string | null;
           role: UserRole;
           created_at: string;
           updated_at: string;
@@ -26,7 +26,7 @@ export interface Database {
           id: string;
           email: string;
           full_name?: string | null;
-          company?: string | null;
+          organisation?: string | null;
           role?: UserRole;
           created_at?: string;
           updated_at?: string;
@@ -35,7 +35,7 @@ export interface Database {
           id?: string;
           email?: string;
           full_name?: string | null;
-          company?: string | null;
+          organisation?: string | null;
           role?: UserRole;
           created_at?: string;
           updated_at?: string;
@@ -240,7 +240,7 @@ export interface Database {
         Row: {
           student_id: string;
           full_name: string;
-          company: string | null;
+          organisation: string | null;
           exam_id: string;
           exam_title: string;
           best_score: number;
@@ -309,7 +309,6 @@ export interface ExamData {
   description: string | null;
   duration_minutes: number;
   total_marks: number;
-  pass_mark_percent: number;
   allow_review: boolean;
   instructions: string | null;
 }
@@ -333,9 +332,6 @@ export interface SubmitExamResponse {
     total_marks: number;
     score: number;
     percentage: number;
-    pass_mark: number;
-    pass_mark_percent: number;
-    passed: boolean;
     completed_at: string;
     questions_answered: number;
     questions_total: number;

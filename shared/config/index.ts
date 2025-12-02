@@ -15,9 +15,8 @@ export const APP_CONFIG = {
  * Default exam settings
  */
 export const EXAM_DEFAULTS = {
-  durationMinutes: 60,
-  passMarkPercent: 60,
-  randomizeQuestions: false,
+  durationMinutes: 70,
+  randomizeQuestions: true,
 } as const;
 
 /**

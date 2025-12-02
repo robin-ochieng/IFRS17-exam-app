@@ -58,27 +58,6 @@ export function calculatePercentage(score: number, total: number): number {
 }
 
 /**
- * Determine if a score is passing
- */
-export function isPassing(percentScore: number, passMarkPercent: number): boolean {
-  return percentScore >= passMarkPercent;
-}
-
-/**
- * Get pass/fail status text
- */
-export function getPassStatus(passed: boolean): string {
-  return passed ? 'PASSED' : 'FAILED';
-}
-
-/**
- * Get pass/fail color class (Tailwind)
- */
-export function getPassStatusColor(passed: boolean): string {
-  return passed ? 'text-green-600' : 'text-red-600';
-}
-
-/**
  * Shuffle an array (Fisher-Yates algorithm)
  * Used for randomizing questions/options
  */

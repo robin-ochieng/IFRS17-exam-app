@@ -175,6 +175,11 @@ export default function ExamPage() {
         return;
       }
 
+      // Store results in sessionStorage for faster results page load
+      if (data.data) {
+        sessionStorage.setItem(`exam_results_${attempt.id}`, JSON.stringify(data.data));
+      }
+
       // Redirect to results page
       router.push(`/exam/${examId}/results?attempt=${attempt.id}`);
       

@@ -15,7 +15,7 @@ export const APP_CONFIG = {
  * Default exam settings
  */
 export const EXAM_DEFAULTS = {
-  durationMinutes: 70,
+  durationMinutes: 45,
   randomizeQuestions: true,
 } as const;
 

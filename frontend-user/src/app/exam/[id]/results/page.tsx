@@ -49,6 +49,24 @@ function ResultsContent() {
         return;
       }
 
+      // First, check if we have cached results from the submit response (faster UX)
+      if (attemptId) {
+        const cachedResults = sessionStorage.getItem(`exam_results_${attemptId}`);
+        if (cachedResults) {
+          try {
+            const parsedResults = JSON.parse(cachedResults);
+            setResults(parsedResults);
+            setIsLoading(false);
+            // Clear the cache after use
+            sessionStorage.removeItem(`exam_results_${attemptId}`);
+            return;
+          } catch (e) {
+            console.error('Error parsing cached results:', e);
+            // Fall through to database fetch
+          }
+        }
+      }
+
       // Try to get the latest completed attempt for this exam
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: attempt, error } = await supabase

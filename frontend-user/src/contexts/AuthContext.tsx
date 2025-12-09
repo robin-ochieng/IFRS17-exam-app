@@ -58,21 +58,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     const initAuth = async () => {
+      console.log('AuthContext: Starting auth initialization...');
+      console.log('AuthContext: Supabase URL configured:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+      
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('AuthContext: Calling getSession...');
+        const startTime = Date.now();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('AuthContext: getSession completed in', Date.now() - startTime, 'ms');
+        
+        if (error) {
+          console.error('AuthContext: getSession error:', error);
+        }
         
         if (!isMounted) return;
         
+        console.log('AuthContext: Session exists:', !!session);
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
+          console.log('AuthContext: Fetching profile for user:', session.user.id);
           const profileData = await fetchProfile(session.user.id);
           if (isMounted) setProfile(profileData);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('AuthContext: Error initializing auth:', error);
       } finally {
+        console.log('AuthContext: Initialization complete, setting isLoading to false');
         if (isMounted) setIsLoading(false);
       }
     };

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
@@ -18,15 +18,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Create supabase client once outside component to avoid recreation
-const supabase = createClient();
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const initialized = useRef(false);
+  
+  // Create supabase client inside component with memoization
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
     try {
@@ -56,24 +55,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    // Prevent double initialization in strict mode
-    if (initialized.current) return;
-    initialized.current = true;
+    let isMounted = true;
 
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
           const profileData = await fetchProfile(session.user.id);
-          setProfile(profileData);
+          if (isMounted) setProfile(profileData);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
@@ -81,12 +81,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
           const profileData = await fetchProfile(session.user.id);
-          setProfile(profileData);
+          if (isMounted) setProfile(profileData);
         } else {
           setProfile(null);
         }
@@ -95,10 +97,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
+    // Timeout fallback to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (isMounted) {
+        console.warn('Auth initialization timeout - forcing loading to complete');
+        setIsLoading(false);
+      }
+    }, 10000);
+
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
+      clearTimeout(timeout);
     };
-  }, []);
+  }, [supabase]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({

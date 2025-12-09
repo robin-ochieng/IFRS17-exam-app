@@ -23,7 +23,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [authError, setAuthError] = useState<string | null>(null);
   
   // Create supabase client inside component with memoization
   const supabase = useMemo(() => createClient(), []);
@@ -66,24 +65,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('AuthContext: Calling getSession...');
         const startTime = Date.now();
         
-        // Add a race condition with a shorter timeout
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise<{ data: { session: null }, error: Error }>((_, reject) => 
-          setTimeout(() => reject(new Error('getSession timeout after 8s')), 8000)
-        );
+        // Create a timeout that resolves with null session instead of rejecting
+        let timeoutId: NodeJS.Timeout;
+        const timeoutPromise = new Promise<{ data: { session: null }, error: null }>((resolve) => {
+          timeoutId = setTimeout(() => {
+            console.warn('AuthContext: getSession timed out after 5s, continuing without session');
+            resolve({ data: { session: null }, error: null });
+          }, 5000);
+        });
         
-        let session = null;
-        let sessionError = null;
+        // Race between actual session fetch and timeout
+        const result = await Promise.race([
+          supabase.auth.getSession().then(res => {
+            clearTimeout(timeoutId);
+            return res;
+          }),
+          timeoutPromise
+        ]);
         
-        try {
-          const result = await Promise.race([sessionPromise, timeoutPromise]);
-          session = result.data.session;
-          sessionError = result.error;
-          console.log('AuthContext: getSession completed in', Date.now() - startTime, 'ms');
-        } catch (raceError) {
-          console.error('AuthContext: getSession race error:', raceError);
-          setAuthError((raceError as Error)?.message || 'Failed to initialize session');
-        }
+        const session = result.data.session;
+        const sessionError = result.error;
+        
+        console.log('AuthContext: getSession completed in', Date.now() - startTime, 'ms, session:', !!session);
         
         if (sessionError) {
           console.error('AuthContext: getSession error:', sessionError);
@@ -102,7 +105,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('AuthContext: Error initializing auth:', error);
-        setAuthError((error as Error)?.message || 'Failed to initialize auth');
+        // Don't set auth error for network issues - just proceed without session
+        console.log('AuthContext: Proceeding without session due to error');
       } finally {
         console.log('AuthContext: Initialization complete, setting isLoading to false');
         if (isMounted) setIsLoading(false);
@@ -129,14 +133,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    // Timeout fallback to prevent infinite loading (reduced since we have 5s race in initAuth)
+    // Backup timeout fallback (should rarely trigger since initAuth has its own 5s timeout)
     const timeout = setTimeout(() => {
       if (isMounted) {
-        console.warn('Auth initialization timeout - forcing loading to complete');
-        setAuthError(prev => prev ?? 'Auth initialization timeout');
+        console.warn('Auth initialization backup timeout - forcing loading to complete');
         setIsLoading(false);
       }
-    }, 9000);
+    }, 7000);
 
     return () => {
       isMounted = false;
@@ -204,22 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshProfile,
       }}
     >
-      {authError ? (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-          <div className="max-w-md w-full rounded-2xl bg-white shadow-lg border border-gray-200 p-6 text-center">
-            <div className="text-red-500 font-semibold mb-2">Authentication Error</div>
-            <div className="text-gray-700 text-sm mb-4">{authError}</div>
-            <button
-              onClick={() => location.reload()}
-              className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </AuthContext.Provider>
   );
 }

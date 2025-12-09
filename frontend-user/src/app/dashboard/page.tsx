@@ -88,6 +88,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
+      // Not authenticated, redirect to login
+      setIsLoading(false);
       router.push('/login');
       return;
     }

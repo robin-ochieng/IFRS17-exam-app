@@ -64,11 +64,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         console.log('AuthContext: Calling getSession...');
         const startTime = Date.now();
-        const { data: { session }, error } = await supabase.auth.getSession();
-        console.log('AuthContext: getSession completed in', Date.now() - startTime, 'ms');
         
-        if (error) {
-          console.error('AuthContext: getSession error:', error);
+        // Add a race condition with a shorter timeout
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<{ data: { session: null }, error: Error }>((_, reject) => 
+          setTimeout(() => reject(new Error('getSession timeout after 5s')), 5000)
+        );
+        
+        let session = null;
+        let sessionError = null;
+        
+        try {
+          const result = await Promise.race([sessionPromise, timeoutPromise]);
+          session = result.data.session;
+          sessionError = result.error;
+          console.log('AuthContext: getSession completed in', Date.now() - startTime, 'ms');
+        } catch (raceError) {
+          console.error('AuthContext: getSession race error:', raceError);
+        }
+        
+        if (sessionError) {
+          console.error('AuthContext: getSession error:', sessionError);
         }
         
         if (!isMounted) return;
@@ -110,13 +126,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    // Timeout fallback to prevent infinite loading
+    // Timeout fallback to prevent infinite loading (reduced since we have 5s race in initAuth)
     const timeout = setTimeout(() => {
       if (isMounted) {
         console.warn('Auth initialization timeout - forcing loading to complete');
         setIsLoading(false);
       }
-    }, 10000);
+    }, 6000);
 
     return () => {
       isMounted = false;

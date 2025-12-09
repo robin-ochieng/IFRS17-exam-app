@@ -26,18 +26,25 @@ function LoginForm() {
     setError('');
     setIsLoading(true);
 
+    console.log('Login: Starting sign in...');
+    
     try {
       const { error } = await signIn(email, password);
       
+      console.log('Login: Sign in completed, error:', error);
+      
       if (error) {
         setError(error.message);
+        setIsLoading(false);
         return;
       }
 
+      console.log('Login: Redirecting to', redirectTo);
       router.push(redirectTo);
-    } catch {
+      router.refresh();
+    } catch (err) {
+      console.error('Login: Unexpected error:', err);
       setError('An unexpected error occurred');
-    } finally {
       setIsLoading(false);
     }
   };

@@ -33,7 +33,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     const selectId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
     return (
-      <div className="w-full">
+      <div className={cn("w-full", className)}>
         {label && (
           <label
             htmlFor={selectId}
@@ -51,8 +51,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
               'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
               error
                 ? 'border-red-500 focus:ring-red-500'
-                : 'border-gray-300 hover:border-gray-400',
-              className
+                : 'border-gray-300 hover:border-gray-400'
             )}
             ref={ref}
             aria-invalid={error ? 'true' : 'false'}

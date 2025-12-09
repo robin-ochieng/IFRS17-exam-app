@@ -27,7 +27,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
     return (
-      <div className="w-full">
+      <div className={cn("w-full", className)}>
         {label && (
           <label
             htmlFor={inputId}
@@ -54,8 +54,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
                 ? 'border-red-500 focus:ring-red-500'
                 : 'border-gray-300 hover:border-gray-400',
               leftIcon && 'pl-10',
-              rightIcon && 'pr-10',
-              className
+              rightIcon && 'pr-10'
             )}
             ref={ref}
             aria-invalid={error ? 'true' : 'false'}

@@ -10,7 +10,7 @@ import { DataTable } from '@/components/tables';
 import {
   Button,
   Select,
-  Badge,
+  Input,
   LoadingSpinner,
 } from '@/components/ui';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -43,6 +43,8 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
   const [examFilter, setExamFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -94,13 +96,21 @@ export default function ResultsPage() {
         query = query.eq('passed', false).eq('status', 'submitted');
       }
 
+      // Date range filter
+      if (dateFrom) {
+        query = query.gte('started_at', `${dateFrom}T00:00:00`);
+      }
+      if (dateTo) {
+        query = query.lte('started_at', `${dateTo}T23:59:59`);
+      }
+
       const { data: attemptsData } = await query;
       setAttempts((attemptsData as unknown as AttemptWithDetails[]) || []);
       setLoading(false);
     };
 
     fetchData();
-  }, [examFilter, statusFilter]);
+  }, [examFilter, statusFilter, dateFrom, dateTo]);
 
   const columns: ColumnDef<AttemptWithDetails>[] = [
     {
@@ -146,19 +156,6 @@ export default function ResultsPage() {
           {format(new Date(row.original.started_at), 'MMM d, yyyy HH:mm')}
         </span>
       ),
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => {
-        if (row.original.status !== 'submitted') {
-          return <Badge variant="warning">In Progress</Badge>;
-        }
-        if (row.original.passed) {
-          return <Badge variant="success">Passed</Badge>;
-        }
-        return <Badge variant="danger">Failed</Badge>;
-      },
     },
     {
       accessorKey: 'raw_score',
@@ -290,7 +287,7 @@ export default function ResultsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-end gap-4">
         <Select
           label="Exam"
           options={[
@@ -317,6 +314,33 @@ export default function ResultsPage() {
           onChange={(e) => setStatusFilter(e.target.value)}
           className="w-48"
         />
+        <Input
+          label="From Date"
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+          className="w-44"
+        />
+        <Input
+          label="To Date"
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          className="w-44"
+        />
+        {(dateFrom || dateTo) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setDateFrom('');
+              setDateTo('');
+            }}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            Clear dates
+          </Button>
+        )}
       </div>
 
       {/* Results Table */}

@@ -320,7 +320,7 @@ export default function ExamPage() {
                     <Timer className="h-4 w-4 text-blue-600" />
                   </div>
                   <div>
-                    <span className="text-gray-800">You have <strong className="text-blue-700">1 hour and 10 minutes (70 minutes)</strong> to complete this exam.</span>
+                    <span className="text-gray-800">You have <strong className="text-blue-700">45 minutes</strong> to complete this exam.</span>
                   </div>
                 </li>
                 <li className="flex items-start p-3 rounded-xl bg-emerald-50/50 border border-emerald-100">

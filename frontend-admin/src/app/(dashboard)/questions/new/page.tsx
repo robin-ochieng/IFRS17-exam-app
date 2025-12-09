@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
@@ -10,7 +10,7 @@ import { LoadingSpinner } from '@/components/ui';
 import type { QuestionFormData } from '@/types/forms';
 import type { Exam } from '@/types/database';
 
-export default function NewQuestionPage() {
+function NewQuestionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const defaultExamId = searchParams.get('exam_id') || undefined;
@@ -151,5 +151,13 @@ export default function NewQuestionPage() {
         submitLabel="Create Question"
       />
     </div>
+  );
+}
+
+export default function NewQuestionPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <NewQuestionContent />
+    </Suspense>
   );
 }

@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   
   // Create supabase client inside component with memoization
   const supabase = useMemo(() => createClient(), []);
@@ -68,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Add a race condition with a shorter timeout
         const sessionPromise = supabase.auth.getSession();
         const timeoutPromise = new Promise<{ data: { session: null }, error: Error }>((_, reject) => 
-          setTimeout(() => reject(new Error('getSession timeout after 5s')), 5000)
+          setTimeout(() => reject(new Error('getSession timeout after 8s')), 8000)
         );
         
         let session = null;
@@ -81,6 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('AuthContext: getSession completed in', Date.now() - startTime, 'ms');
         } catch (raceError) {
           console.error('AuthContext: getSession race error:', raceError);
+          setAuthError((raceError as Error)?.message || 'Failed to initialize session');
         }
         
         if (sessionError) {
@@ -100,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('AuthContext: Error initializing auth:', error);
+        setAuthError((error as Error)?.message || 'Failed to initialize auth');
       } finally {
         console.log('AuthContext: Initialization complete, setting isLoading to false');
         if (isMounted) setIsLoading(false);
@@ -130,9 +133,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const timeout = setTimeout(() => {
       if (isMounted) {
         console.warn('Auth initialization timeout - forcing loading to complete');
+        setAuthError(prev => prev ?? 'Auth initialization timeout');
         setIsLoading(false);
       }
-    }, 6000);
+    }, 9000);
 
     return () => {
       isMounted = false;
@@ -200,7 +204,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshProfile,
       }}
     >
-      {children}
+      {authError ? (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+          <div className="max-w-md w-full rounded-2xl bg-white shadow-lg border border-gray-200 p-6 text-center">
+            <div className="text-red-500 font-semibold mb-2">Authentication Error</div>
+            <div className="text-gray-700 text-sm mb-4">{authError}</div>
+            <button
+              onClick={() => location.reload()}
+              className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }

@@ -284,7 +284,7 @@ export default function ExamPage() {
               <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-3">
                 <Timer className="h-7 w-7 text-blue-600" />
               </div>
-              <div className="text-3xl font-bold text-gray-900">70</div>
+              <div className="text-3xl font-bold text-gray-900">45</div>
               <div className="text-sm text-gray-500 font-medium">Minutes</div>
             </div>
             <div className="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow">

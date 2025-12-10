@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -15,11 +15,28 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   
-  const { signIn } = useAuth();
+  const { signIn, user, isInitialized } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/dashboard';
+
+  // Redirect when user becomes available after login
+  useEffect(() => {
+    if (loginSuccess && user) {
+      console.log('Login: User authenticated, redirecting to', redirectTo);
+      router.push(redirectTo);
+      router.refresh();
+    }
+  }, [loginSuccess, user, redirectTo, router]);
+
+  // If already logged in, redirect immediately
+  useEffect(() => {
+    if (isInitialized && user) {
+      router.push(redirectTo);
+    }
+  }, [isInitialized, user, redirectTo, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,9 +56,10 @@ function LoginForm() {
         return;
       }
 
-      console.log('Login: Redirecting to', redirectTo);
-      router.push(redirectTo);
-      router.refresh();
+      // Mark login as successful - wait for onAuthStateChange to update user
+      console.log('Login: Sign in successful, waiting for auth state update...');
+      setLoginSuccess(true);
+      // Keep isLoading true until redirect happens
     } catch (err) {
       console.error('Login: Unexpected error:', err);
       setError('An unexpected error occurred');

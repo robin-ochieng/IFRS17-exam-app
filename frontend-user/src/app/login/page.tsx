@@ -15,25 +15,16 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [loginSuccess, setLoginSuccess] = useState(false);
   
   const { signIn, user, isInitialized } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/dashboard';
 
-  // Redirect when user becomes available after login
-  useEffect(() => {
-    if (loginSuccess && user) {
-      console.log('Login: User authenticated, redirecting to', redirectTo);
-      router.push(redirectTo);
-      router.refresh();
-    }
-  }, [loginSuccess, user, redirectTo, router]);
-
   // If already logged in, redirect immediately
   useEffect(() => {
     if (isInitialized && user) {
+      console.log('Login: Already authenticated, redirecting to', redirectTo);
       router.push(redirectTo);
     }
   }, [isInitialized, user, redirectTo, router]);
@@ -56,10 +47,9 @@ function LoginForm() {
         return;
       }
 
-      // Mark login as successful - wait for onAuthStateChange to update user
-      console.log('Login: Sign in successful, waiting for auth state update...');
-      setLoginSuccess(true);
-      // Keep isLoading true until redirect happens
+      // signIn now directly updates user state, so redirect immediately
+      console.log('Login: Sign in successful, redirecting to', redirectTo);
+      router.push(redirectTo);
     } catch (err) {
       console.error('Login: Unexpected error:', err);
       setError('An unexpected error occurred');

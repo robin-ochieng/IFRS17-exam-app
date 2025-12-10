@@ -122,14 +122,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         setIsLoading(false);
         return { error: error as Error };
       }
       
-      // Don't set loading false - onAuthStateChange will handle it
+      // Directly update state after successful login
+      // Don't rely on onAuthStateChange which may not fire reliably
+      if (data.session) {
+        console.log('AuthContext: Sign in successful, updating state directly');
+        setSession(data.session);
+        setUser(data.session.user);
+        
+        // Fetch profile
+        const profileData = await fetchProfile(data.session.user.id);
+        setProfile(profileData);
+      }
+      
+      setIsLoading(false);
       return { error: null };
     } catch (err) {
       setIsLoading(false);

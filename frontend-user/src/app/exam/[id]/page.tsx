@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { LoadingPage } from '@/components/ui/Loading';
 import { formatTime } from '@/lib/utils';
-import { Clock, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle, BookOpen, Timer, Shuffle, Save, Eye } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle, BookOpen, Timer, Shuffle, Save, Eye, Home, ChevronDown, ChevronUp, XCircle, Award, Target } from 'lucide-react';
 import type { ExamData, ExamQuestion, ExamAttempt, StartExamResponse, SubmitExamResponse } from '@/types/database';
 
 export default function ExamPage() {
@@ -31,6 +31,8 @@ export default function ExamPage() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [examResults, setExamResults] = useState<SubmitExamResponse['data'] | null>(null);
+  const [expandedQuestions, setExpandedQuestions] = useState<Set<string> | 'all'>('all');
   
   const supabase = createClient();
 
@@ -175,13 +177,11 @@ export default function ExamPage() {
         return;
       }
 
-      // Store results in sessionStorage for faster results page load
+      // Show results inline immediately - NO navigation delay!
       if (data.data) {
-        sessionStorage.setItem(`exam_results_${attempt.id}`, JSON.stringify(data.data));
+        setExamResults(data.data);
+        setTimeRemaining(0); // Stop timer
       }
-
-      // Redirect to results page
-      router.push(`/exam/${examId}/results?attempt=${attempt.id}`);
       
     } catch (err) {
       console.error('Error submitting exam:', err);
@@ -408,6 +408,161 @@ export default function ExamPage() {
 
   if (!exam || !questions.length) {
     return <LoadingPage message="Loading questions..." />;
+  }
+
+  // Helper functions for results display
+  const toggleQuestion = (questionId: string) => {
+    setExpandedQuestions(prev => {
+      if (prev === 'all') {
+        const allIds = new Set(examResults?.review?.questions.map(q => q.question_id) || []);
+        allIds.delete(questionId);
+        return allIds;
+      }
+      const newSet = new Set(prev);
+      if (newSet.has(questionId)) {
+        newSet.delete(questionId);
+      } else {
+        newSet.add(questionId);
+      }
+      return newSet;
+    });
+  };
+
+  const isExpanded = (questionId: string) => {
+    return expandedQuestions === 'all' || expandedQuestions.has(questionId);
+  };
+
+  // Show results inline after submission - INSTANT display, no page navigation!
+  if (examResults) {
+    const passed = examResults.percentage >= 60;
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Header */}
+        <header className="bg-gradient-to-r from-blue-700 via-blue-800 to-blue-700 shadow-lg">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center gap-4">
+                <div className="bg-white rounded-lg p-1.5 shadow-sm">
+                  <Image src="/IRA logo.png" alt="IRA Logo" width={100} height={36} className="h-8 w-auto" priority />
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="text-lg font-semibold text-white">Examination Complete</h1>
+                  <p className="text-sm text-blue-200">IFRS 17 Online Exam</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Results Summary Card */}
+          <div className={`rounded-3xl shadow-2xl overflow-hidden mb-8 ${passed ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-red-500 to-rose-600'}`}>
+            <div className="px-8 py-10 text-center text-white">
+              <div className={`w-24 h-24 rounded-full ${passed ? 'bg-emerald-400/30' : 'bg-red-400/30'} flex items-center justify-center mx-auto mb-6`}>
+                {passed ? <Award className="h-14 w-14 text-white" /> : <Target className="h-14 w-14 text-white" />}
+              </div>
+              <h1 className="text-4xl font-bold mb-2">
+                {passed ? 'Congratulations!' : 'Exam Completed'}
+              </h1>
+              <p className="text-xl opacity-90 mb-8">
+                {passed ? 'You have passed the examination' : 'Unfortunately, you did not pass this time'}
+              </p>
+              
+              <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto">
+                <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                  <div className="text-4xl font-bold">{examResults.score}/{examResults.total_marks}</div>
+                  <div className="text-sm opacity-80 mt-1">Score</div>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                  <div className="text-4xl font-bold">{examResults.percentage}%</div>
+                  <div className="text-sm opacity-80 mt-1">Percentage</div>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
+                  <div className="text-4xl font-bold">{examResults.questions_correct}/{examResults.questions_total}</div>
+                  <div className="text-sm opacity-80 mt-1">Correct</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Question Review */}
+          {examResults.review?.questions && (
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+              <div className="px-6 py-4 bg-gray-50 border-b flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Question Review</h2>
+                <button 
+                  onClick={() => setExpandedQuestions(prev => prev === 'all' ? new Set() : 'all')}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  {expandedQuestions === 'all' ? 'Collapse All' : 'Expand All'}
+                </button>
+              </div>
+              <div className="divide-y">
+                {examResults.review.questions.map((q) => (
+                  <div key={q.question_id} className="p-6">
+                    <button onClick={() => toggleQuestion(q.question_id)} className="w-full flex items-start justify-between text-left">
+                      <div className="flex items-start gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${q.is_correct ? 'bg-green-100' : 'bg-red-100'}`}>
+                          {q.is_correct ? <CheckCircle className="h-5 w-5 text-green-600" /> : <XCircle className="h-5 w-5 text-red-600" />}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-gray-900">Question {q.question_number}</span>
+                          <span className={`ml-3 px-2 py-1 rounded-full text-xs font-medium ${q.is_correct ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {q.marks_earned}/{q.marks} marks
+                          </span>
+                        </div>
+                      </div>
+                      {isExpanded(q.question_id) ? <ChevronUp className="h-5 w-5 text-gray-400 shrink-0" /> : <ChevronDown className="h-5 w-5 text-gray-400 shrink-0" />}
+                    </button>
+                    
+                    {isExpanded(q.question_id) && (
+                      <div className="mt-4 pl-14">
+                        <p className="text-gray-800 mb-4 bg-gray-50 p-4 rounded-xl">{q.prompt}</p>
+                        <div className="space-y-2">
+                          {q.options.map((opt) => {
+                            const isCorrectAnswer = opt.is_correct;
+                            const wasSelected = opt.id === q.selected_option_id;
+                            let optionStyle = 'bg-gray-50 border-gray-200';
+                            if (isCorrectAnswer) optionStyle = 'bg-green-50 border-green-300';
+                            else if (wasSelected && !isCorrectAnswer) optionStyle = 'bg-red-50 border-red-300';
+                            
+                            return (
+                              <div key={opt.id} className={`p-3 rounded-xl border-2 ${optionStyle} flex items-center`}>
+                                <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold mr-3 shrink-0 ${isCorrectAnswer ? 'bg-green-500 text-white' : wasSelected ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                  {opt.label}
+                                </span>
+                                <span className="flex-1">{opt.text}</span>
+                                {isCorrectAnswer && <CheckCircle className="h-5 w-5 text-green-500 ml-2 shrink-0" />}
+                                {wasSelected && !isCorrectAnswer && <XCircle className="h-5 w-5 text-red-500 ml-2 shrink-0" />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {q.explanation && (
+                          <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                            <p className="text-sm font-semibold text-blue-800 mb-1">Explanation:</p>
+                            <p className="text-blue-700">{q.explanation}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Back to Dashboard Button */}
+          <div className="text-center">
+            <Button onClick={() => router.push('/dashboard')} size="lg" className="px-8">
+              <Home className="h-5 w-5 mr-2" />
+              Back to Dashboard
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   const currentQuestion = questions[currentQuestionIndex];

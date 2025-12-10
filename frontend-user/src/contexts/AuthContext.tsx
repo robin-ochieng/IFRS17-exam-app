@@ -157,8 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
-        await supabase
-          .from('profiles')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('profiles') as any)
           .update({
             full_name: fullName,
             organisation: organisation || null,

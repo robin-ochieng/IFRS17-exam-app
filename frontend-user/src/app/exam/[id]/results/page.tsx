@@ -24,7 +24,7 @@ import {
 import type { SubmitExamResponse, ReviewQuestion } from '@/types/database';
 
 function ResultsContent() {
-  const { user, profile, isLoading: authLoading } = useAuth();
+  const { user, profile, isLoading: authLoading, isInitialized } = useAuth();
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -38,7 +38,7 @@ function ResultsContent() {
   const supabase = createClient();
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (isInitialized && !user) {
       router.push('/login');
       return;
     }
@@ -167,7 +167,7 @@ function ResultsContent() {
     if (user) {
       fetchResults();
     }
-  }, [user, authLoading, router, examId, attemptId, supabase]);
+  }, [user, isInitialized, router, examId, attemptId, supabase]);
 
   const toggleQuestion = (questionId: string) => {
     setExpandedQuestions(prev => {
@@ -193,7 +193,7 @@ function ResultsContent() {
     return expandedQuestions.has(questionId);
   };
 
-  if (authLoading || isLoading) {
+  if (!isInitialized || isLoading) {
     return <LoadingPage message="Loading results..." />;
   }
 

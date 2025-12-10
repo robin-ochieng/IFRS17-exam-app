@@ -17,7 +17,7 @@ interface ExamWithAttempts extends Exam {
 }
 
 export default function DashboardPage() {
-  const { user, profile, isLoading: authLoading, signOut } = useAuth();
+  const { user, profile, isLoading: authLoading, isInitialized, signOut } = useAuth();
   const [exams, setExams] = useState<ExamWithAttempts[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -87,7 +87,7 @@ export default function DashboardPage() {
   }, [user, supabase]);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (isInitialized && !user) {
       // Not authenticated, redirect to login
       setIsLoading(false);
       router.push('/login');
@@ -96,17 +96,17 @@ export default function DashboardPage() {
 
     if (user) {
       fetchExams();
-    } else if (!authLoading) {
+    } else if (isInitialized) {
       setIsLoading(false);
     }
-  }, [user, authLoading, router, fetchExams]);
+  }, [user, isInitialized, router, fetchExams]);
 
   const handleSignOut = async () => {
     await signOut();
     router.push('/login');
   };
 
-  if (authLoading || isLoading) {
+  if (!isInitialized || isLoading) {
     return <LoadingPage message="Loading dashboard..." />;
   }
 

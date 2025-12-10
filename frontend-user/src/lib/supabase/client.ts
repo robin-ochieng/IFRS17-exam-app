@@ -17,6 +17,18 @@ export function createClient() {
     throw new Error('Supabase configuration missing. Please check your environment variables.');
   }
   
-  client = createBrowserClient<Database>(url, key);
+  client = createBrowserClient<Database>(url, key, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: 'ifrs17-exam-auth',
+    },
+  });
+  
   return client;
+}
+
+export function clearClient() {
+  client = null;
 }

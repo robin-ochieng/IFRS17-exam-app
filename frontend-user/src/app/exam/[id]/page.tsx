@@ -14,7 +14,7 @@ import { Clock, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle, BookOpen,
 import type { ExamData, ExamQuestion, ExamAttempt, StartExamResponse, SubmitExamResponse } from '@/types/database';
 
 export default function ExamPage() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, isInitialized } = useAuth();
   const router = useRouter();
   const params = useParams();
   const examId = params.id as string;
@@ -222,7 +222,7 @@ export default function ExamPage() {
 
   // Load exam on mount
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (isInitialized && !user) {
       router.push('/login');
       return;
     }
@@ -230,10 +230,10 @@ export default function ExamPage() {
     if (user && !showInstructions) {
       startExam();
     }
-  }, [user, authLoading, router, showInstructions, startExam]);
+  }, [user, isInitialized, router, showInstructions, startExam]);
 
   // Show loading state
-  if (authLoading) {
+  if (!isInitialized) {
     return <LoadingPage message="Loading..." />;
   }
 

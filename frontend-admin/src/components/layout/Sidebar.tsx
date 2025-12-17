@@ -60,6 +60,10 @@ const navItems: NavItem[] = [
     title: 'Analytics',
     href: '/analytics',
     icon: TrendingUp,
+    children: [
+      { title: 'Overview', href: '/analytics' },
+      { title: 'Question Performance', href: '/analytics/question-performance' },
+    ],
   },
   {
     title: 'Users',

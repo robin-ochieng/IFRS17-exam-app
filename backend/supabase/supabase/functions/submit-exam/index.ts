@@ -69,6 +69,7 @@ Deno.serve(async (req) => {
           id,
           title,
           total_marks,
+          pass_mark_percent,
           allow_review
         )
       `)
@@ -186,9 +187,12 @@ Deno.serve(async (req) => {
     // Calculate final results
     const exam = attempt.exams as any;
     const totalMarks = exam.total_marks;
+    const passMarkPercent = exam.pass_mark_percent || 60; // Default to 60% if not set
     const questionsCorrect = questionResults.filter((q) => q.is_correct).length;
     // Use accuracy percentage (correct answers / total questions) instead of marks-based percentage
     const accuracyPercent = Math.round((questionsCorrect / questions.length) * 100);
+    // Determine if the user passed based on the exam's pass mark percentage
+    const passed = accuracyPercent >= passMarkPercent;
 
     // Update the attempt with final results
     const { error: updateError } = await adminClient
@@ -198,6 +202,7 @@ Deno.serve(async (req) => {
         submitted_at: new Date().toISOString(),
         raw_score: totalScore,
         percent_score: accuracyPercent,  // Store accuracy percentage, not marks percentage
+        passed: passed,  // Store whether the user passed the exam
       })
       .eq('id', attempt_id);
 
@@ -215,6 +220,8 @@ Deno.serve(async (req) => {
         total_marks: totalMarks,
         score: totalScore,
         percentage: accuracyPercent,  // Return accuracy percentage
+        passed: passed,  // Return pass/fail status
+        pass_mark_percent: passMarkPercent,  // Return the required pass mark
         completed_at: new Date().toISOString(),
         questions_answered: answerInserts.length,
         questions_total: questions.length,

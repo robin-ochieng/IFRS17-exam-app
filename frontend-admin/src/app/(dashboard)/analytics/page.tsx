@@ -88,16 +88,18 @@ export default function AnalyticsPage() {
       const startDate = startOfDay(subDays(new Date(), daysAgo));
       const endDate = endOfDay(new Date());
 
-      // Define attempt type
+      // Define attempt type based on actual database schema
       interface AttemptData {
         id: string;
         exam_id: string;
         user_id: string;
-        score: number | null;
+        raw_score: number | null;
+        percent_score: number | null;
         passed: boolean | null;
         started_at: string;
         submitted_at: string | null;
-        is_completed: boolean;
+        status: 'in_progress' | 'submitted' | 'expired';
+        time_taken_seconds: number | null;
         exam: {
           id: string;
           title: string;
@@ -105,18 +107,20 @@ export default function AnalyticsPage() {
         } | null;
       }
 
-      // Build base query
+      // Build base query with correct field names from database schema
       let attemptQuery = supabase
         .from('attempts')
         .select(`
           id,
           exam_id,
           user_id,
-          score,
+          raw_score,
+          percent_score,
           passed,
           started_at,
           submitted_at,
-          is_completed,
+          status,
+          time_taken_seconds,
           exam:exams!attempts_exam_id_fkey (
             id,
             title,
@@ -130,14 +134,19 @@ export default function AnalyticsPage() {
         attemptQuery = attemptQuery.eq('exam_id', selectedExamId);
       }
 
-      const { data: rawAttempts } = await attemptQuery;
+      const { data: rawAttempts, error: attemptsError } = await attemptQuery;
+      
+      if (attemptsError) {
+        console.error('Error fetching attempts:', attemptsError);
+      }
+      
       const attempts = rawAttempts as unknown as AttemptData[] | null;
 
-      // Get unique users
+      // Get unique users (students)
       const { count: totalUsers } = await supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true })
-        .eq('role', 'user');
+        .eq('role', 'student');
 
       // Calculate exam-specific stats
       const examStatsMap = new Map<string, ExamStats>();
@@ -156,14 +165,23 @@ export default function AnalyticsPage() {
         };
 
         existing.totalAttempts++;
-        if (attempt.is_completed) {
+        // Check if attempt is completed (status is 'submitted' or 'expired')
+        const isCompleted = attempt.status === 'submitted' || attempt.status === 'expired';
+        if (isCompleted) {
           existing.completedAttempts++;
           if (attempt.passed) {
             existing.passedAttempts++;
           }
-          if (attempt.score) {
+          // Use percent_score directly (it's already a percentage)
+          if (attempt.percent_score !== null) {
             existing.avgScore =
-              (existing.avgScore * (existing.completedAttempts - 1) + (attempt.score / exam.total_marks) * 100) /
+              (existing.avgScore * (existing.completedAttempts - 1) + attempt.percent_score) /
+              existing.completedAttempts;
+          }
+          // Calculate average duration if available
+          if (attempt.time_taken_seconds !== null) {
+            existing.avgDuration =
+              (existing.avgDuration * (existing.completedAttempts - 1) + attempt.time_taken_seconds) /
               existing.completedAttempts;
           }
         }
@@ -183,7 +201,9 @@ export default function AnalyticsPage() {
         const existing = dailyStatsMap.get(date);
         if (existing) {
           existing.attempts++;
-          if (attempt.is_completed) {
+          // Check if attempt is completed (status is 'submitted' or 'expired')
+          const isCompleted = attempt.status === 'submitted' || attempt.status === 'expired';
+          if (isCompleted) {
             if (attempt.passed) {
               existing.passed++;
             } else {
@@ -194,12 +214,14 @@ export default function AnalyticsPage() {
       });
 
       // Calculate overall stats
-      const completedAttempts = (attempts || []).filter((a) => a.is_completed);
+      const completedAttempts = (attempts || []).filter(
+        (a) => a.status === 'submitted' || a.status === 'expired'
+      );
       const passedAttempts = completedAttempts.filter((a) => a.passed);
+      // Use percent_score directly for average calculation
       const totalScore = completedAttempts.reduce((sum, a) => {
-        const exam = a.exam;
-        if (a.score && exam) {
-          return sum + (a.score / exam.total_marks) * 100;
+        if (a.percent_score !== null) {
+          return sum + a.percent_score;
         }
         return sum;
       }, 0);

@@ -31,13 +31,23 @@ export default function DashboardLayout({
         {/* Main content */}
         <div
           className={cn(
-            'transition-all duration-300',
+            'min-h-screen transition-all duration-300',
             sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
           )}
         >
-          <Header onMenuClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
+          {/* Fixed Header */}
+          <div 
+            className={cn(
+              'fixed top-0 right-0 z-20',
+              sidebarCollapsed ? 'lg:left-16' : 'lg:left-64',
+              'left-0'
+            )}
+          >
+            <Header onMenuClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} />
+          </div>
           
-          <main className="p-4 lg:p-6">
+          {/* Scrollable main content with top padding for fixed header */}
+          <main className="pt-20 p-4 lg:p-6 lg:pt-20">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>

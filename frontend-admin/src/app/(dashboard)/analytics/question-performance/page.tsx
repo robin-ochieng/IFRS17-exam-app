@@ -297,8 +297,26 @@ export default function QuestionPerformancePage() {
     const startDate = startOfDay(subDays(new Date(), daysAgo));
     const endDate = endOfDay(new Date());
 
+    // Define type for question query result
+    interface QuestionQueryResult {
+      id: string;
+      question_number: number;
+      prompt: string;
+      marks: number;
+      explanation: string | null;
+      exam_id: string;
+      exam: { id: string; title: string } | null;
+      options: {
+        id: string;
+        label: string;
+        text: string;
+        is_correct: boolean;
+        display_order: number;
+      }[];
+    }
+
     // Get question details with options
-    const { data: questionData } = await supabase
+    const { data: rawQuestionData } = await supabase
       .from('questions')
       .select(`
         id,
@@ -321,6 +339,8 @@ export default function QuestionPerformancePage() {
       `)
       .eq('id', questionId)
       .single();
+
+    const questionData = rawQuestionData as unknown as QuestionQueryResult | null;
 
     if (!questionData) {
       setLoadingDetail(false);
@@ -356,7 +376,7 @@ export default function QuestionPerformancePage() {
     });
 
     const totalSelections = answerData?.length || 0;
-    const options = ((questionData.options as any[]) || [])
+    const options = (questionData.options || [])
       .sort((a, b) => a.display_order - b.display_order)
       .map((opt) => ({
         optionId: opt.id,
@@ -370,7 +390,7 @@ export default function QuestionPerformancePage() {
             : 0,
       }));
 
-    const exam = questionData.exam as any;
+    const exam = questionData.exam;
     const performanceItem = performanceData.find((p) => p.questionId === questionId);
 
     setSelectedQuestion({

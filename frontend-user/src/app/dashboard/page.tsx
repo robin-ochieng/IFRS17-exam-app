@@ -60,8 +60,29 @@ export default function DashboardPage() {
       const examsData = examsResult.data || [];
       const attemptsData = (attemptsResult.data || []) as AttemptData[];
       
-      const examsWithAttempts: ExamWithAttempts[] = examsData.map((exam) => {
+      // Filter out "IFRS 17 Post-Training Assessment" exam and transform titles
+      const filteredExams = examsData.filter(
+        (exam) => exam.title !== 'IFRS 17 Post-Training Assessment'
+      );
+      
+      const examsWithAttempts: ExamWithAttempts[] = filteredExams.map((exam) => {
         const examObj = exam as Exam;
+        // Replace IRA with SHA in exam titles and update descriptions
+        let updatedDescription = examObj.description || '';
+        // Replace the full IRA-related description with SHA version
+        updatedDescription = updatedDescription.replace(
+          /Online assessment of IFRS 17 knowledge for insurers under Insurance Regulatory Authority \(IRA\) supervision\./g,
+          'Online assessment of IFRS 17 knowledge for Social Health Authority.'
+        );
+        // Also handle partial replacements as fallback
+        updatedDescription = updatedDescription.replace(/Insurance Regulatory Authority/g, 'Social Health Authority');
+        updatedDescription = updatedDescription.replace(/\(IRA\)/g, '(SHA)');
+        
+        const transformedExam = {
+          ...examObj,
+          title: examObj.title.replace(/\bIRA\b/g, 'SHA'),
+          description: updatedDescription,
+        };
         const examAttempts = attemptsData
           .filter((attempt) => attempt.exam_id === examObj.id)
           .map((attempt) => ({
@@ -73,7 +94,7 @@ export default function DashboardPage() {
             created_at: attempt.started_at,
           })) as Attempt[];
         return {
-          ...examObj,
+          ...transformedExam,
           attempts: examAttempts
         };
       });

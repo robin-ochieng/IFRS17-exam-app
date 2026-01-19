@@ -252,8 +252,8 @@ export default function ExamPage() {
               <div className="flex items-center gap-4">
                 <div className="bg-white rounded-lg p-1.5 shadow-sm">
                   <Image
-                    src="/IRA logo.png"
-                    alt="IRA Logo"
+                    src="/sha_logo.svg"
+                    alt="SHA Logo"
                     width={100}
                     height={36}
                     className="h-8 w-auto"
@@ -444,7 +444,7 @@ export default function ExamPage() {
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center gap-4">
                 <div className="bg-white rounded-lg p-1.5 shadow-sm">
-                  <Image src="/IRA logo.png" alt="IRA Logo" width={100} height={36} className="h-8 w-auto" priority />
+                  <Image src="/sha_logo.svg" alt="SHA Logo" width={100} height={36} className="h-8 w-auto" priority />
                 </div>
                 <div className="hidden sm:block">
                   <h1 className="text-lg font-semibold text-white">Examination Complete</h1>
@@ -581,8 +581,8 @@ export default function ExamPage() {
             <div className="flex items-center space-x-4">
               <div className="bg-white rounded-lg p-1.5 shadow-sm">
                 <Image
-                  src="/IRA logo.png"
-                  alt="IRA Logo"
+                  src="/sha_logo.svg"
+                  alt="SHA Logo"
                   width={100}
                   height={36}
                   className="h-8 w-auto"

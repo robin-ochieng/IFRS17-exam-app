@@ -212,8 +212,8 @@ function ResultsContent() {
             <div className="flex items-center gap-4">
               <div className="bg-white rounded-lg p-1.5 shadow-sm">
                 <Image
-                  src="/IRA logo.png"
-                  alt="IRA Logo"
+                  src="/sha_logo.svg"
+                  alt="SHA Logo"
                   width={100}
                   height={36}
                   className="h-8 w-auto"
@@ -500,7 +500,7 @@ function ResultsContent() {
         {/* Footer */}
         <div className="text-center py-6 border-t border-gray-200">
           <p className="text-gray-500 text-sm">
-            © {new Date().getFullYear()} Insurance Regulatory Authority. All rights reserved.
+            © {new Date().getFullYear()} Social Health Authority. All rights reserved.
           </p>
         </div>
       </main>

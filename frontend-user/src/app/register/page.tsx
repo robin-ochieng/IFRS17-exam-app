@@ -101,8 +101,8 @@ export default function RegisterPage() {
         <CardHeader className="text-center pt-8 pb-2">
           <div className="mx-auto mb-6">
             <Image
-              src="/IRA logo.png"
-              alt="IRA Logo"
+              src="/sha_logo.svg"
+              alt="SHA Logo"
               width={200}
               height={60}
               className="h-16 w-auto"
@@ -111,7 +111,7 @@ export default function RegisterPage() {
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">Create Account</CardTitle>
           <CardDescription className="text-gray-500 mt-2">
-            Register to take the IRA IFRS 17 Exam
+            Register to take the SHA IFRS 17 Exam
           </CardDescription>
         </CardHeader>
         <CardContent className="px-8 pb-8">

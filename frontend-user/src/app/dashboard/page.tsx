@@ -162,8 +162,8 @@ export default function DashboardPage() {
             <div className="flex items-center">
               <Link href="/">
                 <Image
-                  src="/IRA logo.png"
-                  alt="IRA IFRS 17 Exam"
+                  src="/sha_logo.svg"
+                  alt="SHA IFRS 17 Exam"
                   width={200}
                   height={52}
                   className="h-14 w-auto cursor-pointer"

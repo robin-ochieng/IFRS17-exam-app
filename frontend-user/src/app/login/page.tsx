@@ -63,8 +63,8 @@ function LoginForm() {
         <CardHeader className="text-center pt-8 pb-2">
           <div className="mx-auto mb-6">
             <Image
-              src="/IRA logo.png"
-              alt="IRA Logo"
+              src="/sha_logo.svg"
+              alt="SHA Logo"
               width={200}
               height={60}
               className="h-16 w-auto"

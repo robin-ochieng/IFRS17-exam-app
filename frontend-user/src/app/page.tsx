@@ -12,8 +12,8 @@ export default function HomePage() {
             <div className="flex items-center">
               <div className="bg-white rounded-lg px-3 py-1">
                 <Image
-                  src="/IRA logo.png"
-                  alt="IRA IFRS 17 Exam"
+                  src="/sha_logo.svg"
+                  alt="SHA IFRS 17 Exam"
                   width={220}
                   height={56}
                   className="h-12 w-auto"
@@ -56,7 +56,7 @@ export default function HomePage() {
               {/* Description */}
               <p className="mt-8 text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
                 Assess your understanding of the IFRS 17 Insurance Contracts standard. 
-                Designed for insurers under Insurance Regulatory Authority supervision.
+                Designed for Social Health Authority.
               </p>
               
               {/* CTA Buttons */}
@@ -84,7 +84,7 @@ export default function HomePage() {
       <footer className="bg-gray-50 border-t border-gray-100">
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
           <p className="text-center text-gray-500 text-sm">
-            © 2025 Insurance Regulatory Authority. All rights reserved.
+            © 2025 Social Health Authority. All rights reserved.
           </p>
           <p className="text-center text-gray-400 text-xs mt-2">
             Powered by <span className="font-semibold text-blue-600">Kenbright AI</span>

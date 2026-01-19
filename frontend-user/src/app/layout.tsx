@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'IFRS 17 Exam Portal',
-  description: 'Online assessment platform for IFRS 17 knowledge under Insurance Regulatory Authority supervision',
+  description: 'Online assessment platform for IFRS 17 knowledge for Social Health Authority',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },

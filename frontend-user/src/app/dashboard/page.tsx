@@ -17,7 +17,7 @@ interface ExamWithAttempts extends Exam {
 }
 
 export default function DashboardPage() {
-  const { user, profile, isLoading: authLoading, isInitialized, signOut } = useAuth();
+  const { user, profile, isInitialized, signOut } = useAuth();
   const [exams, setExams] = useState<ExamWithAttempts[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -57,7 +57,7 @@ export default function DashboardPage() {
       };
 
       // Combine exams with their attempts
-      const examsData = examsResult.data || [];
+      const examsData = (examsResult.data || []) as Exam[];
       const attemptsData = (attemptsResult.data || []) as AttemptData[];
       
       // Filter out "IFRS 17 Post-Training Assessment" exam and transform titles
